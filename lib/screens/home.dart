@@ -110,7 +110,7 @@ class _MapState extends State<Map> {
                     child: RaisedButton(onPressed: ()async{
                         GeoFirePoint point = GeoFirePoint(appState.center.latitude, appState.center.longitude);
                         Firestore.instance.collection("locations").add({
-                          "points": point.data,
+                          "position": point.data,
                           "name": "Taxi Driver"
                         });
                         print("it all worked");

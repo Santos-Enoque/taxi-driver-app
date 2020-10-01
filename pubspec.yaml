@@ -23,8 +23,9 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
-  cloud_firestore: ^0.14.0+2
-  firebase_auth:
+  firebase_core: "^0.5.0"
+  firebase_auth: "^0.18.1"
+  cloud_firestore:
   google_maps_flutter:
   location:
   uuid:

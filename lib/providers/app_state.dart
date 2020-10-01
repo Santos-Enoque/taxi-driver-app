@@ -14,6 +14,7 @@ class AppStateProvider with ChangeNotifier{
   Set<Polyline> _poly = {};
   GoogleMapsServices _googleMapsServices = GoogleMapsServices();
   GoogleMapController _mapController;
+  Position position;
   static LatLng _center;
   LatLng _lastPosition = _center;
   TextEditingController _locationController = TextEditingController();
@@ -32,7 +33,7 @@ class AppStateProvider with ChangeNotifier{
   }
 
     _getUserLocation() async {
-    Position position = await Geolocator()
+    position = await Geolocator()
         .getCurrentPosition();
     List<Placemark> placemark = await Geolocator()
         .placemarkFromCoordinates(position.latitude, position.longitude);
