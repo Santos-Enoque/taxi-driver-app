@@ -20,6 +20,7 @@ class AppStateProvider with ChangeNotifier{
   TextEditingController _locationController = TextEditingController();
   TextEditingController destinationController = TextEditingController();
 
+
   LatLng get center => _center;
   LatLng get lastPosition => _lastPosition;
   TextEditingController get locationController => _locationController;
@@ -68,20 +69,7 @@ class AppStateProvider with ChangeNotifier{
           notifyListeners();
   }
 
-  void _addDriverMarker(LocationData newLocalData, Uint8List imageData) {
-    LatLng latlng = LatLng(newLocalData.latitude, newLocalData.longitude);
-    var uuid = new Uuid();
-    String markerId = uuid.v1();
-    _markers.add(Marker(
-        markerId: MarkerId(markerId),
-        position: latlng,
-        rotation: newLocalData.heading,
-        draggable: false,
-        zIndex: 2,
-        flat: true,
-        anchor: Offset(0.5, 0.5),
-        icon: BitmapDescriptor.fromBytes(imageData)));
-  }
+
 
     void sendRequest({String intendedLocation, LatLng coordinates}) async {
       LatLng destination = coordinates;
@@ -94,33 +82,6 @@ class AppStateProvider with ChangeNotifier{
 
       _createRoute(route.points);
       notifyListeners();
-
-//    if(intendedLocation != null){
-//      List<Placemark> placemark =
-//      await Geolocator().placemarkFromAddress(intendedLocation);
-//      double latitude = placemark[0].position.latitude;
-//      double longitude = placemark[0].position.longitude;
-//      LatLng destination = LatLng(latitude, longitude);
-//      _center = destination;
-//      RouteModel route =
-//      await _googleMapsServices.getRouteByCoordinates(_center, destination);
-//      routeModel = route;
-//      _addMarker(destination, routeModel.endAddress, routeModel.distance.text);
-//
-//      _createRoute(route.points);
-//      notifyListeners();
-//    }else{
-//      LatLng destination = coordinates;
-//      RouteModel route =
-//      await _googleMapsServices.getRouteByCoordinates(_center, destination);
-//      routeModel = route;
-//      _addMarker(destination, routeModel.endAddress, routeModel.distance.text);
-//      _center = destination;
-//
-//      _createRoute(route.points);
-//      notifyListeners();
-//    }
-
   }
 
     void _createRoute(String decodeRoute) {
@@ -185,4 +146,5 @@ class AppStateProvider with ChangeNotifier{
     ByteData byteData = await DefaultAssetBundle.of(context).load("images/car.png");
     return byteData.buffer.asUint8List();
   }
+
 }

@@ -108,9 +108,8 @@ class _MapState extends State<Map> {
                   child: Padding(
                     padding: const EdgeInsets.only(left:15.0, right: 15.0),
                     child: RaisedButton(onPressed: ()async{
-                        GeoFirePoint point = GeoFirePoint(appState.center.latitude, appState.center.longitude);
-                        Firestore.instance.collection("locations").add({
-                          "position": point.data,
+                        FirebaseFirestore.instance.collection("locations").add({
+                          "position": appState.position.toJson(),
                           "name": "Taxi Driver"
                         });
                         print("it all worked");

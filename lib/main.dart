@@ -12,7 +12,13 @@ void main() {
         value: AppStateProvider(),
       )
     ],
-    child: MyApp(),
+    child: MaterialApp(
+      debugShowCheckedModeBanner: false,
+        theme: ThemeData(
+          primaryColor: Colors.orange
+        ),
+        title: "Taxi App",
+        home: MyApp()),
   ));
 }
 
@@ -37,14 +43,7 @@ class MyApp extends StatelessWidget {
 
         // Once complete, show your application
         if (snapshot.connectionState == ConnectionState.done) {
-          return MaterialApp(
-            debugShowCheckedModeBanner: false,
-            title: 'Txapita',
-            theme: ThemeData(
-              primarySwatch: Colors.red,
-            ),
-            home: MyHomePage(title: 'Txapita'),
-          );
+          return MyHomePage(title: 'Txapita');
           ;
         }
 
