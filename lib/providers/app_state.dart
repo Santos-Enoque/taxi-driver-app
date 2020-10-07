@@ -1,6 +1,7 @@
 import 'package:cabdriver/helpers/style.dart';
 import 'package:cabdriver/models/route.dart';
 import 'package:cabdriver/services/map_requests.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
@@ -29,11 +30,22 @@ class AppStateProvider with ChangeNotifier{
   GoogleMapController get mapController => _mapController;
   RouteModel routeModel;
 
+  Location location = new Location();
+
+
   AppStateProvider(){
     _getUserLocation();
+    Geolocator().getPositionStream().listen(_userCurrentLocationUpdate);
+  }
+
+  _userCurrentLocationUpdate(Position updatedPosition){
+    FirebaseFirestore.instance.collection("locations").doc("VOYPizKCFocEmXKlZXzP").update({
+      "position": updatedPosition.toJson(),
+    });
   }
 
     _getUserLocation() async {
+
     position = await Geolocator()
         .getCurrentPosition();
     List<Placemark> placemark = await Geolocator()
@@ -54,7 +66,9 @@ class AppStateProvider with ChangeNotifier{
   }
 
     onCameraMove(CameraPosition position) {
+    print(" ================ ITS MOVING ===============");
     _lastPosition = position.target;
+    notifyListeners();
   }
 
     _addLocationMarker(LatLng position, String destination, String distance) {

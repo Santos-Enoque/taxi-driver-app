@@ -56,6 +56,7 @@ class _MapState extends State<Map> {
   Color darkBlue = Colors.black;
   Color grey = Colors.grey;
   GlobalKey<ScaffoldState> scaffoldSate = GlobalKey<ScaffoldState>();
+  String position = "postion";
 
   @override
   void initState() {
@@ -79,7 +80,8 @@ class _MapState extends State<Map> {
                 onMapCreated: appState.onCreate,
                 myLocationEnabled: true,
                 mapType: MapType.normal,
-                compassEnabled: true,
+                tiltGesturesEnabled: true,
+                compassEnabled: false,
                 markers: appState.markers,
                 onCameraMove: appState.onCameraMove,
                 polylines: appState.poly,
@@ -97,6 +99,8 @@ class _MapState extends State<Map> {
                       scaffoldSate.currentState.openDrawer();
                     }),
               ),
+              
+
 
               Positioned(
                 bottom: 10,
