@@ -2,6 +2,7 @@ import 'package:cabdriver/helpers/constants.dart';
 import 'package:cabdriver/helpers/style.dart';
 import 'package:cabdriver/providers/app_state.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_google_places/flutter_google_places.dart';
 import 'package:geocoder/geocoder.dart';
@@ -112,7 +113,12 @@ class _MapState extends State<Map> {
                   child: Padding(
                     padding: const EdgeInsets.only(left:15.0, right: 15.0),
                     child: RaisedButton(onPressed: ()async{
-                        FirebaseFirestore.instance.collection("locations").add({
+//                        FirebaseFirestore.instance.collection("locations").add({
+//                          "position": appState.position.toJson(),
+//                          "name": "Taxi Driver"
+//                        });
+
+                      FirebaseDatabase.instance.reference().child('drivers/3').set({
                           "position": appState.position.toJson(),
                           "name": "Taxi Driver"
                         });
