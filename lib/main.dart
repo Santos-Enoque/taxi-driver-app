@@ -1,35 +1,43 @@
 import 'package:cabdriver/providers/app_state.dart';
+import 'package:cabdriver/providers/user.dart';
+import 'package:cabdriver/screens/login.dart';
+import 'package:cabdriver/screens/splash.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
+import 'helpers/constants.dart';
 import 'screens/home.dart';
 import 'package:provider/provider.dart';
 
 void main() {
+
   WidgetsFlutterBinding.ensureInitialized();
   return runApp(MultiProvider(
     providers: [
       ChangeNotifierProvider<AppStateProvider>.value(
         value: AppStateProvider(),
-      )
+      ),
+      ChangeNotifierProvider.value(value: UserProvider.initialize()),
+
     ],
     child: MaterialApp(
       debugShowCheckedModeBanner: false,
         theme: ThemeData(
-          primaryColor: Colors.orange
+          primaryColor: Colors.deepOrange
         ),
-        title: "Taxi App",
+        title: "Flutter Taxi",
         home: MyApp()),
   ));
 }
 
 class MyApp extends StatelessWidget {
-  final Future<FirebaseApp> _initialization = Firebase.initializeApp();
 
   @override
   Widget build(BuildContext context) {
+    UserProvider auth = Provider.of<UserProvider>(context);
+
     return FutureBuilder(
       // Initialize FlutterFire:
-      future: _initialization,
+      future: initialization,
       builder: (context, snapshot) {
         // Check for errors
         if (snapshot.hasError) {
@@ -43,7 +51,17 @@ class MyApp extends StatelessWidget {
 
         // Once complete, show your application
         if (snapshot.connectionState == ConnectionState.done) {
-          return MyHomePage(title: 'Txapita');
+          switch (auth.status) {
+            case Status.Uninitialized:
+              return Splash();
+            case Status.Unauthenticated:
+            case Status.Authenticating:
+              return LoginScreen();
+            case Status.Authenticated:
+              return MyHomePage();
+            default:
+              return LoginScreen();
+          }
           ;
         }
 

@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:location/location.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:uuid/uuid.dart';
 import 'dart:typed_data';
 
@@ -29,6 +30,7 @@ class AppStateProvider with ChangeNotifier{
   Set<Polyline> get poly => _poly;
   GoogleMapController get mapController => _mapController;
   RouteModel routeModel;
+  SharedPreferences prefs;
 
   Location location = new Location();
 
@@ -38,19 +40,28 @@ class AppStateProvider with ChangeNotifier{
     Geolocator().getPositionStream().listen(_userCurrentLocationUpdate);
   }
 
-  _userCurrentLocationUpdate(Position updatedPosition){
-    FirebaseFirestore.instance.collection("locations").doc("VOYPizKCFocEmXKlZXzP").update({
-      "position": updatedPosition.toJson(),
-    });
+  _userCurrentLocationUpdate(Position updatedPosition)async{
+//    double distance = await Geolocator().distanceBetween(prefs.getDouble('lat'), prefs.getDouble('lng'), updatedPosition.latitude, updatedPosition.longitude);
+//    print(" ========= DISTANCE ${distance.toString()} ===============");
+//    if(distance >= 50){
+//      FirebaseFirestore.instance.collection("locations").doc("VOYPizKCFocEmXKlZXzP").update({
+//        "position": updatedPosition.toJson(),
+//      });
+//      await prefs.setDouble('lat', updatedPosition.latitude);
+//      await prefs.setDouble('lng', updatedPosition.longitude);
+//    }
+
   }
 
     _getUserLocation() async {
-
+      prefs = await SharedPreferences.getInstance();
     position = await Geolocator()
         .getCurrentPosition();
     List<Placemark> placemark = await Geolocator()
         .placemarkFromCoordinates(position.latitude, position.longitude);
       _center = LatLng(position.latitude, position.longitude);
+     await prefs.setDouble('lat', position.latitude);
+      await prefs.setDouble('lng', position.longitude);
       _locationController.text = placemark[0].name;
       notifyListeners();
   }
@@ -66,7 +77,6 @@ class AppStateProvider with ChangeNotifier{
   }
 
     onCameraMove(CameraPosition position) {
-    print(" ================ ITS MOVING ===============");
     _lastPosition = position.target;
     notifyListeners();
   }
