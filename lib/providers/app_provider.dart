@@ -1,6 +1,11 @@
+import 'dart:async';
+
+import 'package:cabdriver/helpers/constants.dart';
 import 'package:cabdriver/helpers/style.dart';
 import 'package:cabdriver/models/route.dart';
 import 'package:cabdriver/services/map_requests.dart';
+import 'package:cabdriver/services/push_notifications.dart';
+import 'package:cabdriver/services/user.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
@@ -33,23 +38,73 @@ class AppStateProvider with ChangeNotifier{
   SharedPreferences prefs;
 
   Location location = new Location();
+  bool hasNewRideRequest = false;
+  UserServices _userServices = UserServices();
+
 
 
   AppStateProvider(){
+//    _subscribeUser();
+    _saveDeviceToken();
+    fcm.configure(
+//      this callback is used when the app runs on the foreground
+        onMessage: handleOnMessage,
+//        used when the app is closed completely and is launched using the notification
+        onLaunch: handleOnLaunch,
+//        when its on the background and opened using the notification drawer
+        onResume: handleOnResume);
     _getUserLocation();
     Geolocator().getPositionStream().listen(_userCurrentLocationUpdate);
   }
 
-  _userCurrentLocationUpdate(Position updatedPosition)async{
-//    double distance = await Geolocator().distanceBetween(prefs.getDouble('lat'), prefs.getDouble('lng'), updatedPosition.latitude, updatedPosition.longitude);
-//    print(" ========= DISTANCE ${distance.toString()} ===============");
-//    if(distance >= 50){
-//      FirebaseFirestore.instance.collection("locations").doc("VOYPizKCFocEmXKlZXzP").update({
-//        "position": updatedPosition.toJson(),
-//      });
-//      await prefs.setDouble('lat', updatedPosition.latitude);
-//      await prefs.setDouble('lng', updatedPosition.longitude);
+//  _subscribeUser()async{
+//    prefs = await SharedPreferences.getInstance();
+//    bool _first = prefs.getBool('first_open') ?? true;
+//    if(_first){
+//      fcm.subscribeToTopic("driver");
+//      await prefs.setBool('first_open', false);
 //    }
+//  }
+
+  _saveDeviceToken()async{
+    prefs = await SharedPreferences.getInstance();
+    if(prefs.getString('token') == null){
+      String deviceToken = await fcm.getToken();
+      await prefs.setString('token', deviceToken);
+    }
+  }
+
+//  PUSH NOTIFICATION METHODS
+  Future handleOnMessage(Map<String, dynamic> data) async {
+    print("=== data = ${data.toString()}");
+    hasNewRideRequest = true;
+    notifyListeners();
+  }
+
+  Future handleOnLaunch(Map<String, dynamic> data) async {
+    print("=== data = ${data.toString()}");
+    hasNewRideRequest = true;
+    notifyListeners();
+  }
+
+  Future handleOnResume(Map<String, dynamic> data) async {
+    print("=== data = ${data.toString()}");
+    hasNewRideRequest = true;
+    notifyListeners();
+  }
+
+  _userCurrentLocationUpdate( Position updatedPosition)async{
+    double distance = await Geolocator().distanceBetween(prefs.getDouble('lat'), prefs.getDouble('lng'), updatedPosition.latitude, updatedPosition.longitude);
+    print("=== DISTACE === ${distance.toString()}");
+    Map<String, dynamic> values = {
+      "id": prefs.getString("id"),
+      "position": updatedPosition.toJson()
+    };
+    if(distance >= 50){
+      _userServices.updateUserData(values);
+      await prefs.setDouble('lat', updatedPosition.latitude);
+      await prefs.setDouble('lng', updatedPosition.longitude);
+    }
 
   }
 

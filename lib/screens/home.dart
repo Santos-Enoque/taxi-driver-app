@@ -1,11 +1,12 @@
 import 'package:cabdriver/helpers/constants.dart';
 import 'package:cabdriver/helpers/screen_navigation.dart';
 import 'package:cabdriver/helpers/style.dart';
-import 'package:cabdriver/providers/app_state.dart';
+import 'package:cabdriver/providers/app_provider.dart';
 import 'package:cabdriver/providers/user.dart';
 import 'package:cabdriver/screens/login.dart';
 import 'package:cabdriver/widgets/custom_text.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:geocoder/geocoder.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
@@ -29,7 +30,18 @@ class _MyHomePageState extends State<MyHomePage> {
   @override
   void initState() {
     super.initState();
+    _deviceToken();
     _updatePosition();
+  }
+  _deviceToken()async{
+    SharedPreferences preferences = await SharedPreferences.getInstance();
+    UserProvider _user = Provider.of<UserProvider>(context, listen: false);
+
+    if(_user.userModel.token != preferences.getString('token')){
+      Provider.of<UserProvider>(context, listen: false).saveDeviceToken();
+
+    }
+
   }
 
   _updatePosition()async{
@@ -45,34 +57,53 @@ class _MyHomePageState extends State<MyHomePage> {
   Widget build(BuildContext context) {
     AppStateProvider appState = Provider.of<AppStateProvider>(context);
     UserProvider userProvider = Provider.of<UserProvider>(context);
-
-    return SafeArea(
+    Widget home = SafeArea(
       child: Scaffold(
           key: scaffoldState,
           drawer: Drawer(
               child: ListView(
-            children: [
-              UserAccountsDrawerHeader(
-                  accountName: CustomText(
-                    text: userProvider.userModel?.name ?? "",
-                    size: 18,
-                    weight: FontWeight.bold,
-                  ),
-                  accountEmail: CustomText(
-                    text: userProvider.userModel?.email ?? "",
-                  )),
-              ListTile(
-                leading: Icon(Icons.exit_to_app),
-                title: CustomText(text: "Log out"),
-                onTap: (){
-                  userProvider.signOut();
-                  changeScreenReplacement(context, LoginScreen());
-                },
-              )
-            ],
-          )),
+                children: [
+                  UserAccountsDrawerHeader(
+                      accountName: CustomText(
+                        text: userProvider.userModel?.name ?? "",
+                        size: 18,
+                        weight: FontWeight.bold,
+                      ),
+                      accountEmail: CustomText(
+                        text: userProvider.userModel?.email ?? "",
+                      )),
+                  ListTile(
+                    leading: Icon(Icons.exit_to_app),
+                    title: CustomText(text: "Log out"),
+                    onTap: (){
+                      userProvider.signOut();
+                      changeScreenReplacement(context, LoginScreen());
+                    },
+                  )
+                ],
+              )),
           body: Map(scaffoldState)),
     );
+
+    switch(appState.hasNewRideRequest){
+      case false:
+        return home;
+      case true:
+        return SafeArea(child: Scaffold(
+          body: Container(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                CustomText(text: "Ride request"),
+              ],
+            ),
+          ),
+        ));
+      default:
+        return home;
+    }
+
+
   }
 }
 
@@ -134,32 +165,6 @@ class _MapState extends State<Map> {
                       scaffoldSate.currentState.openDrawer();
                     }),
               ),
-              Positioned(
-                bottom: 10,
-                left: 0,
-                right: 0,
-                child: SizedBox(
-                  width: double.infinity,
-                  height: 48,
-                  child: Padding(
-                    padding: const EdgeInsets.only(left: 15.0, right: 15.0),
-                    child: RaisedButton(
-                      onPressed: () async {
-                        FirebaseFirestore.instance.collection("locations").add({
-                          "position": appState.position.toJson(),
-                          "name": "Taxi Driver"
-                        });
-                        print("it all worked");
-                      },
-                      color: darkBlue,
-                      child: Text(
-                        "Confirm Booking",
-                        style: TextStyle(color: white, fontSize: 16),
-                      ),
-                    ),
-                  ),
-                ),
-              )
             ],
           );
   }

@@ -3,14 +3,14 @@ import 'package:flutter/cupertino.dart';
 class RouteModel {
   final String points;
   final Distance distance;
-  final Duration duration;
+  final TimeNeeded timeNeeded;
   final String startAddress;
   final String endAddress;
 
   RouteModel(
       {@required this.points,
   @required this.distance,
-  @required this.duration,
+  @required this.timeNeeded,
   @required this.startAddress,
   @required this.endAddress});
 }
@@ -25,11 +25,11 @@ class Distance {
   }
 }
 
-class Duration {
+class TimeNeeded {
   String text;
   int value;
 
-  Duration.fromMap(Map data) {
+  TimeNeeded.fromMap(Map data) {
     text = data["text"];
     value = data["value"];
   }

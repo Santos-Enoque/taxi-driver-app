@@ -68,13 +68,15 @@ class UserProvider with ChangeNotifier{
       notifyListeners();
       await auth.createUserWithEmailAndPassword(email: email.text.trim(), password: password.text.trim()).then((result) async {
         SharedPreferences prefs = await SharedPreferences.getInstance();
+        String _deviceToken = await fcm.getToken();
         await prefs.setString("id", result.user.uid);
         _userServices.createUser(
           id: result.user.uid,
           name: name.text.trim(),
           email: email.text.trim(),
           phone: phone.text.trim(),
-          position: position.toJson()
+          position: position.toJson(),
+          token: _deviceToken
         );
       });
       return true;
@@ -109,14 +111,30 @@ class UserProvider with ChangeNotifier{
      _userServices.updateUserData(data);
   }
 
+  saveDeviceToken()async{
+    String deviceToken = await fcm.getToken();
+    if(deviceToken != null){
+      _userServices.addDeviceToken(
+        userId: user.uid,
+        token: deviceToken
+      );
+    }
+  }
+
 
   _onStateChanged(User firebaseUser) async{
+    SharedPreferences prefs = await SharedPreferences.getInstance();
     if(firebaseUser == null){
       _status = Status.Unauthenticated;
     }else{
       _user = firebaseUser;
-      _status = Status.Authenticated;
-      _userModel = await _userServices.getUserById(user.uid);
+      await prefs.setString("id", firebaseUser.uid);
+
+      _userModel = await _userServices.getUserById(user.uid).then((value){
+        _status = Status.Authenticated;
+        return value;
+      });
+
     }
     notifyListeners();
   }

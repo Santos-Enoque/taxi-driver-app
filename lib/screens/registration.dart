@@ -1,6 +1,6 @@
 import 'package:cabdriver/helpers/screen_navigation.dart';
 import 'package:cabdriver/helpers/style.dart';
-import 'package:cabdriver/providers/app_state.dart';
+import 'package:cabdriver/providers/app_provider.dart';
 import 'package:cabdriver/providers/user.dart';
 import 'package:cabdriver/widgets/custom_text.dart';
 import 'package:cabdriver/widgets/loading.dart';

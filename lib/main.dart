@@ -1,4 +1,4 @@
-import 'package:cabdriver/providers/app_state.dart';
+import 'package:cabdriver/providers/app_provider.dart';
 import 'package:cabdriver/providers/user.dart';
 import 'package:cabdriver/screens/login.dart';
 import 'package:cabdriver/screens/splash.dart';
