@@ -4,9 +4,7 @@ import 'package:cabdriver/helpers/constants.dart';
 import 'package:cabdriver/helpers/style.dart';
 import 'package:cabdriver/models/route.dart';
 import 'package:cabdriver/services/map_requests.dart';
-import 'package:cabdriver/services/push_notifications.dart';
 import 'package:cabdriver/services/user.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
@@ -15,8 +13,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:uuid/uuid.dart';
 import 'dart:typed_data';
 
-
-class AppStateProvider with ChangeNotifier{
+class AppStateProvider with ChangeNotifier {
   Set<Marker> _markers = {};
   Set<Polyline> _poly = {};
   GoogleMapsServices _googleMapsServices = GoogleMapsServices();
@@ -26,7 +23,6 @@ class AppStateProvider with ChangeNotifier{
   LatLng _lastPosition = _center;
   TextEditingController _locationController = TextEditingController();
   TextEditingController destinationController = TextEditingController();
-
 
   LatLng get center => _center;
   LatLng get lastPosition => _lastPosition;
@@ -41,9 +37,7 @@ class AppStateProvider with ChangeNotifier{
   bool hasNewRideRequest = false;
   UserServices _userServices = UserServices();
 
-
-
-  AppStateProvider(){
+  AppStateProvider() {
 //    _subscribeUser();
     _saveDeviceToken();
     fcm.configure(
@@ -57,126 +51,82 @@ class AppStateProvider with ChangeNotifier{
     Geolocator().getPositionStream().listen(_userCurrentLocationUpdate);
   }
 
-//  _subscribeUser()async{
-//    prefs = await SharedPreferences.getInstance();
-//    bool _first = prefs.getBool('first_open') ?? true;
-//    if(_first){
-//      fcm.subscribeToTopic("driver");
-//      await prefs.setBool('first_open', false);
-//    }
-//  }
-
-  _saveDeviceToken()async{
-    prefs = await SharedPreferences.getInstance();
-    if(prefs.getString('token') == null){
-      String deviceToken = await fcm.getToken();
-      await prefs.setString('token', deviceToken);
-    }
-  }
-
-//  PUSH NOTIFICATION METHODS
-  Future handleOnMessage(Map<String, dynamic> data) async {
-    print("=== data = ${data.toString()}");
-    hasNewRideRequest = true;
-    notifyListeners();
-  }
-
-  Future handleOnLaunch(Map<String, dynamic> data) async {
-    print("=== data = ${data.toString()}");
-    hasNewRideRequest = true;
-    notifyListeners();
-  }
-
-  Future handleOnResume(Map<String, dynamic> data) async {
-    print("=== data = ${data.toString()}");
-    hasNewRideRequest = true;
-    notifyListeners();
-  }
-
-  _userCurrentLocationUpdate( Position updatedPosition)async{
-    double distance = await Geolocator().distanceBetween(prefs.getDouble('lat'), prefs.getDouble('lng'), updatedPosition.latitude, updatedPosition.longitude);
+  // ANCHOR LOCATION METHODS
+  _userCurrentLocationUpdate(Position updatedPosition) async {
+    double distance = await Geolocator().distanceBetween(
+        prefs.getDouble('lat'),
+        prefs.getDouble('lng'),
+        updatedPosition.latitude,
+        updatedPosition.longitude);
     print("=== DISTACE === ${distance.toString()}");
     Map<String, dynamic> values = {
       "id": prefs.getString("id"),
       "position": updatedPosition.toJson()
     };
-    if(distance >= 50){
+    if (distance >= 50) {
       _userServices.updateUserData(values);
       await prefs.setDouble('lat', updatedPosition.latitude);
       await prefs.setDouble('lng', updatedPosition.longitude);
     }
-
   }
 
-    _getUserLocation() async {
-      prefs = await SharedPreferences.getInstance();
-    position = await Geolocator()
-        .getCurrentPosition();
+  _getUserLocation() async {
+    prefs = await SharedPreferences.getInstance();
+    position = await Geolocator().getCurrentPosition();
     List<Placemark> placemark = await Geolocator()
         .placemarkFromCoordinates(position.latitude, position.longitude);
-      _center = LatLng(position.latitude, position.longitude);
-     await prefs.setDouble('lat', position.latitude);
-      await prefs.setDouble('lng', position.longitude);
-      _locationController.text = placemark[0].name;
-      notifyListeners();
+    _center = LatLng(position.latitude, position.longitude);
+    await prefs.setDouble('lat', position.latitude);
+    await prefs.setDouble('lng', position.longitude);
+    _locationController.text = placemark[0].name;
+    notifyListeners();
   }
+
+  // ANCHOR MAPS METHODS
 
   onCreate(GoogleMapController controller) {
-      _mapController = controller;
-      notifyListeners();
+    _mapController = controller;
+    notifyListeners();
   }
 
-  setLastPosition(LatLng position){
+  setLastPosition(LatLng position) {
     _lastPosition = position;
     notifyListeners();
   }
 
-    onCameraMove(CameraPosition position) {
+  onCameraMove(CameraPosition position) {
     _lastPosition = position.target;
     notifyListeners();
   }
 
-    _addLocationMarker(LatLng position, String destination, String distance) {
-    _markers = {};
-    var uuid = new Uuid();
-    String markerId = uuid.v1();
-      _markers.add(Marker(
-          markerId: MarkerId(markerId),
-          position: position,
-          infoWindow: InfoWindow(title: destination, snippet: distance),
-          icon: BitmapDescriptor.defaultMarker));
-          notifyListeners();
+  void sendRequest({String intendedLocation, LatLng coordinates}) async {
+    LatLng destination = coordinates;
+    RouteModel route =
+        await _googleMapsServices.getRouteByCoordinates(_center, destination);
+    routeModel = route;
+    _addLocationMarker(
+        destination, routeModel.endAddress, routeModel.distance.text);
+    _center = destination;
+    destinationController.text = routeModel.endAddress;
+
+    _createRoute(route.points);
+    notifyListeners();
   }
 
-
-
-    void sendRequest({String intendedLocation, LatLng coordinates}) async {
-      LatLng destination = coordinates;
-      RouteModel route =
-      await _googleMapsServices.getRouteByCoordinates(_center, destination);
-      routeModel = route;
-      _addLocationMarker(destination, routeModel.endAddress, routeModel.distance.text);
-      _center = destination;
-      destinationController.text = routeModel.endAddress;
-
-      _createRoute(route.points);
-      notifyListeners();
-  }
-
-    void _createRoute(String decodeRoute) {
+  void _createRoute(String decodeRoute) {
     _poly = {};
     var uuid = new Uuid();
     String polyId = uuid.v1();
-      poly.add(Polyline(
-          polylineId: PolylineId(polyId),
-          width: 12,
-          color: primary,
-          onTap: () {},
-          points: _convertToLatLong(_decodePoly(decodeRoute))));
-          notifyListeners();
+    poly.add(Polyline(
+        polylineId: PolylineId(polyId),
+        width: 12,
+        color: primary,
+        onTap: () {},
+        points: _convertToLatLong(_decodePoly(decodeRoute))));
+    notifyListeners();
   }
 
-    List<LatLng> _convertToLatLong(List points) {
+  List<LatLng> _convertToLatLong(List points) {
     List<LatLng> result = <LatLng>[];
     for (int i = 0; i < points.length; i++) {
       if (i % 2 != 0) {
@@ -185,7 +135,6 @@ class AppStateProvider with ChangeNotifier{
     }
     return result;
   }
-
 
   List _decodePoly(String poly) {
     var list = poly.codeUnits;
@@ -221,9 +170,55 @@ class AppStateProvider with ChangeNotifier{
     return lList;
   }
 
+  // ANCHOR MARKERS
+  _addLocationMarker(LatLng position, String destination, String distance) {
+    _markers = {};
+    var uuid = new Uuid();
+    String markerId = uuid.v1();
+    _markers.add(Marker(
+        markerId: MarkerId(markerId),
+        position: position,
+        infoWindow: InfoWindow(title: destination, snippet: distance),
+        icon: BitmapDescriptor.defaultMarker));
+    notifyListeners();
+  }
+
   Future<Uint8List> getMarker(BuildContext context) async {
-    ByteData byteData = await DefaultAssetBundle.of(context).load("images/car.png");
+    ByteData byteData =
+        await DefaultAssetBundle.of(context).load("images/car.png");
     return byteData.buffer.asUint8List();
   }
 
+  _saveDeviceToken() async {
+    prefs = await SharedPreferences.getInstance();
+    if (prefs.getString('token') == null) {
+      String deviceToken = await fcm.getToken();
+      await prefs.setString('token', deviceToken);
+    }
+  }
+
+// ANCHOR PUSH NOTIFICATION METHODS
+  Future handleOnMessage(Map<String, dynamic> data) async {
+    print("=== data = ${data.toString()}");
+    hasNewRideRequest = true;
+    notifyListeners();
+  }
+
+  Future handleOnLaunch(Map<String, dynamic> data) async {
+    print("=== data = ${data.toString()}");
+    hasNewRideRequest = true;
+    notifyListeners();
+  }
+
+  Future handleOnResume(Map<String, dynamic> data) async {
+    print("=== data = ${data.toString()}");
+    hasNewRideRequest = true;
+    notifyListeners();
+  }
+
+// ANCHOR RIDE REQUEST METHODS
+  changeRideRequestStatus() {
+    hasNewRideRequest = false;
+    notifyListeners();
+  }
 }

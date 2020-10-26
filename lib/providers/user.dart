@@ -7,12 +7,10 @@ import 'package:flutter/widgets.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:uuid/uuid.dart';
 
+enum Status { Uninitialized, Authenticated, Authenticating, Unauthenticated }
 
-enum Status{Uninitialized, Authenticated, Authenticating, Unauthenticated}
-
-class UserProvider with ChangeNotifier{
+class UserProvider with ChangeNotifier {
   User _user;
   Status _status = Status.Uninitialized;
   UserServices _userServices = UserServices();
@@ -31,29 +29,30 @@ class UserProvider with ChangeNotifier{
   TextEditingController name = TextEditingController();
   TextEditingController phone = TextEditingController();
 
-
-
-  UserProvider.initialize(){
+  UserProvider.initialize() {
     _fireSetUp();
   }
 
-  _fireSetUp()async{
-   await initialization.then((value) {
-    auth.authStateChanges().listen(_onStateChanged);
-   });
+  _fireSetUp() async {
+    await initialization.then((value) {
+      auth.authStateChanges().listen(_onStateChanged);
+    });
   }
 
-  Future<bool> signIn()async{
+  Future<bool> signIn() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
 
-    try{
+    try {
       _status = Status.Authenticating;
       notifyListeners();
-      await auth.signInWithEmailAndPassword(email: email.text.trim(), password: password.text.trim()).then((value) async {
+      await auth
+          .signInWithEmailAndPassword(
+              email: email.text.trim(), password: password.text.trim())
+          .then((value) async {
         await prefs.setString("id", value.user.uid);
       });
       return true;
-    }catch(e){
+    } catch (e) {
       _status = Status.Unauthenticated;
       notifyListeners();
       print(e.toString());
@@ -61,26 +60,27 @@ class UserProvider with ChangeNotifier{
     }
   }
 
-
-  Future<bool> signUp(Position position)async{
-    try{
+  Future<bool> signUp(Position position) async {
+    try {
       _status = Status.Authenticating;
       notifyListeners();
-      await auth.createUserWithEmailAndPassword(email: email.text.trim(), password: password.text.trim()).then((result) async {
+      await auth
+          .createUserWithEmailAndPassword(
+              email: email.text.trim(), password: password.text.trim())
+          .then((result) async {
         SharedPreferences prefs = await SharedPreferences.getInstance();
         String _deviceToken = await fcm.getToken();
         await prefs.setString("id", result.user.uid);
         _userServices.createUser(
-          id: result.user.uid,
-          name: name.text.trim(),
-          email: email.text.trim(),
-          phone: phone.text.trim(),
-          position: position.toJson(),
-          token: _deviceToken
-        );
+            id: result.user.uid,
+            name: name.text.trim(),
+            email: email.text.trim(),
+            phone: phone.text.trim(),
+            position: position.toJson(),
+            token: _deviceToken);
       });
       return true;
-    }catch(e){
+    } catch (e) {
       _status = Status.Unauthenticated;
       notifyListeners();
       print(e.toString());
@@ -88,55 +88,49 @@ class UserProvider with ChangeNotifier{
     }
   }
 
-  Future signOut()async{
+  Future signOut() async {
     auth.signOut();
     _status = Status.Unauthenticated;
     notifyListeners();
     return Future.delayed(Duration.zero);
   }
 
-  void clearController(){
+  void clearController() {
     name.text = "";
     password.text = "";
     email.text = "";
     phone.text = "";
   }
 
-  Future<void> reloadUserModel()async{
+  Future<void> reloadUserModel() async {
     _userModel = await _userServices.getUserById(user.uid);
     notifyListeners();
   }
 
   updateUserData(Map<String, dynamic> data) async {
-     _userServices.updateUserData(data);
+    _userServices.updateUserData(data);
   }
 
-  saveDeviceToken()async{
+  saveDeviceToken() async {
     String deviceToken = await fcm.getToken();
-    if(deviceToken != null){
-      _userServices.addDeviceToken(
-        userId: user.uid,
-        token: deviceToken
-      );
+    if (deviceToken != null) {
+      _userServices.addDeviceToken(userId: user.uid, token: deviceToken);
     }
   }
 
-
-  _onStateChanged(User firebaseUser) async{
+  _onStateChanged(User firebaseUser) async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
-    if(firebaseUser == null){
+    if (firebaseUser == null) {
       _status = Status.Unauthenticated;
-    }else{
+    } else {
       _user = firebaseUser;
       await prefs.setString("id", firebaseUser.uid);
 
-      _userModel = await _userServices.getUserById(user.uid).then((value){
+      _userModel = await _userServices.getUserById(user.uid).then((value) {
         _status = Status.Authenticated;
         return value;
       });
-
     }
     notifyListeners();
   }
-
 }

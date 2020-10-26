@@ -4,11 +4,10 @@ import 'package:cabdriver/helpers/style.dart';
 import 'package:cabdriver/providers/app_provider.dart';
 import 'package:cabdriver/providers/user.dart';
 import 'package:cabdriver/screens/login.dart';
+import 'package:cabdriver/screens/splash.dart';
+import 'package:cabdriver/widgets/custom_btn.dart';
 import 'package:cabdriver/widgets/custom_text.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
-import 'package:geocoder/geocoder.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:provider/provider.dart';
 import "package:google_maps_webservice/places.dart";
@@ -33,23 +32,23 @@ class _MyHomePageState extends State<MyHomePage> {
     _deviceToken();
     _updatePosition();
   }
-  _deviceToken()async{
+
+  _deviceToken() async {
     SharedPreferences preferences = await SharedPreferences.getInstance();
     UserProvider _user = Provider.of<UserProvider>(context, listen: false);
 
-    if(_user.userModel.token != preferences.getString('token')){
+    if (_user.userModel.token != preferences.getString('token')) {
       Provider.of<UserProvider>(context, listen: false).saveDeviceToken();
-
     }
-
   }
 
-  _updatePosition()async{
+  _updatePosition() async {
     //    this section down here will update the drivers current position on the DB when the app is opened
     SharedPreferences _prefs = await SharedPreferences.getInstance();
-    String _id =  _prefs.getString("id");
+    String _id = _prefs.getString("id");
     UserProvider _user = Provider.of<UserProvider>(context, listen: false);
-    AppStateProvider _app = Provider.of<AppStateProvider>(context, listen: false);
+    AppStateProvider _app =
+        Provider.of<AppStateProvider>(context, listen: false);
     _user.updateUserData({"id": _id, "position": _app.position.toJson()});
   }
 
@@ -62,39 +61,156 @@ class _MyHomePageState extends State<MyHomePage> {
           key: scaffoldState,
           drawer: Drawer(
               child: ListView(
-                children: [
-                  UserAccountsDrawerHeader(
-                      accountName: CustomText(
-                        text: userProvider.userModel?.name ?? "",
-                        size: 18,
-                        weight: FontWeight.bold,
-                      ),
-                      accountEmail: CustomText(
-                        text: userProvider.userModel?.email ?? "",
-                      )),
-                  ListTile(
-                    leading: Icon(Icons.exit_to_app),
-                    title: CustomText(text: "Log out"),
-                    onTap: (){
-                      userProvider.signOut();
-                      changeScreenReplacement(context, LoginScreen());
-                    },
-                  )
-                ],
-              )),
+            children: [
+              UserAccountsDrawerHeader(
+                  accountName: CustomText(
+                    text: userProvider.userModel?.name ?? "",
+                    size: 18,
+                    weight: FontWeight.bold,
+                  ),
+                  accountEmail: CustomText(
+                    text: userProvider.userModel?.email ?? "",
+                  )),
+              ListTile(
+                leading: Icon(Icons.exit_to_app),
+                title: CustomText(text: "Log out"),
+                onTap: () {
+                  userProvider.signOut();
+                  changeScreenReplacement(context, LoginScreen());
+                },
+              )
+            ],
+          )),
           body: Map(scaffoldState)),
     );
 
-    switch(appState.hasNewRideRequest){
+    switch (appState.hasNewRideRequest) {
       case false:
         return home;
       case true:
-        return SafeArea(child: Scaffold(
+        return SafeArea(
+            child: Scaffold(
+          appBar: AppBar(
+            backgroundColor: white,
+            elevation: 0,
+            centerTitle: true,
+            title: CustomText(
+              text: "New Ride Request",
+              size: 19,
+              weight: FontWeight.bold,
+            ),
+            actions: [
+              IconButton(
+                  icon: Icon(
+                    Icons.close,
+                    color: black,
+                  ),
+                  onPressed: () {})
+            ],
+          ),
+          backgroundColor: white,
           body: Container(
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                CustomText(text: "Ride request"),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Container(
+                      decoration: BoxDecoration(
+                          color: Colors.deepOrange,
+                          borderRadius: BorderRadius.circular(40)),
+                      child: CircleAvatar(
+                        radius: 45,
+                        backgroundImage: AssetImage("images/rider.jpg"),
+                      ),
+                    ),
+                  ],
+                ),
+                SizedBox(height: 10),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    CustomText(text: "Santos Enoque"),
+                  ],
+                ),
+                SizedBox(height: 10),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(
+                      Icons.star,
+                      color: Colors.amber,
+                    ),
+                    Icon(
+                      Icons.star,
+                      color: Colors.amber,
+                    ),
+                    Icon(
+                      Icons.star,
+                      color: Colors.amber,
+                    ),
+                    Icon(
+                      Icons.star,
+                      color: Colors.grey.withOpacity(0.4),
+                    ),
+                    Icon(
+                      Icons.star,
+                      color: Colors.grey.withOpacity(0.4),
+                    )
+                  ],
+                ),
+                Divider(),
+                ListTile(
+                  title: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      CustomText(
+                        text: "Destiation",
+                        color: grey,
+                      ),
+                    ],
+                  ),
+                  subtitle: FlatButton.icon(
+                      onPressed: () {},
+                      icon: Icon(Icons.location_on),
+                      label: Text("Laulane Secondary School")),
+                ),
+                Divider(),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                  children: [
+                    FlatButton.icon(
+                        onPressed: null,
+                        icon: Icon(Icons.flag),
+                        label: Text("User is 4.0km away")),
+                    FlatButton.icon(
+                        onPressed: null,
+                        icon: Icon(Icons.attach_money),
+                        label: Text("12.5")),
+                  ],
+                ),
+                Divider(),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                  children: [
+                    CustomBtn(
+                      text: "Accept",
+                      onTap: () {},
+                      bgColor: green,
+                      shadowColor: Colors.greenAccent,
+                    ),
+                    CustomBtn(
+                      text: "Reject",
+                      onTap: () {
+                        appState.changeRideRequestStatus();
+                        Navigator.pop(context);
+                      },
+                      bgColor: red,
+                      shadowColor: Colors.redAccent,
+                    )
+                  ],
+                ),
               ],
             ),
           ),
@@ -102,8 +218,6 @@ class _MyHomePageState extends State<MyHomePage> {
       default:
         return home;
     }
-
-
   }
 }
 
@@ -134,10 +248,7 @@ class _MapState extends State<Map> {
   Widget build(BuildContext context) {
     AppStateProvider appState = Provider.of<AppStateProvider>(context);
     return appState.center == null
-        ? Container(
-            alignment: Alignment.center,
-            child: Center(child: CircularProgressIndicator()),
-          )
+        ? Splash()
         : Stack(
             children: <Widget>[
               GoogleMap(
@@ -167,21 +278,5 @@ class _MapState extends State<Map> {
               ),
             ],
           );
-  }
-
-  Future<Null> displayPrediction(Prediction p) async {
-    if (p != null) {
-      PlacesDetailsResponse detail =
-          await places.getDetailsByPlaceId(p.placeId);
-
-      var placeId = p.placeId;
-      double lat = detail.result.geometry.location.lat;
-      double lng = detail.result.geometry.location.lng;
-
-      var address = await Geocoder.local.findAddressesFromQuery(p.description);
-
-      print(lat);
-      print(lng);
-    }
   }
 }
