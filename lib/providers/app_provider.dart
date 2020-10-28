@@ -2,9 +2,14 @@ import 'dart:async';
 
 import 'package:cabdriver/helpers/constants.dart';
 import 'package:cabdriver/helpers/style.dart';
+import 'package:cabdriver/models/ride_Request.dart';
+import 'package:cabdriver/models/rider.dart';
 import 'package:cabdriver/models/route.dart';
 import 'package:cabdriver/services/map_requests.dart';
+import 'package:cabdriver/services/ride_request.dart';
+import 'package:cabdriver/services/rider.dart';
 import 'package:cabdriver/services/user.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
@@ -14,6 +19,11 @@ import 'package:uuid/uuid.dart';
 import 'dart:typed_data';
 
 class AppStateProvider with ChangeNotifier {
+  static const ACCEPTED = 'accepted';
+  static const CANCELLED = 'cancelled';
+  static const PENDING = 'pending';
+  static const EXPIRED = 'expired';
+  // ANCHOR: VARIABLES DEFINITION
   Set<Marker> _markers = {};
   Set<Polyline> _poly = {};
   GoogleMapsServices _googleMapsServices = GoogleMapsServices();
@@ -36,6 +46,18 @@ class AppStateProvider with ChangeNotifier {
   Location location = new Location();
   bool hasNewRideRequest = false;
   UserServices _userServices = UserServices();
+  RideRequestModel rideRequestModel;
+  RequestModelFirebase requestModelFirebase;
+
+  RiderModel riderModel;
+  RiderServices _riderServices = RiderServices();
+  double distanceFromRider = 0;
+  double totalRideDistance = 0;
+  StreamSubscription<QuerySnapshot> requestStream;
+  int timeCounter = 0;
+  double percentage = 0;
+  Timer periodicTimer;
+  RideRequestServices _requestServices = RideRequestServices();
 
   AppStateProvider() {
 //    _subscribeUser();
@@ -58,7 +80,6 @@ class AppStateProvider with ChangeNotifier {
         prefs.getDouble('lng'),
         updatedPosition.latitude,
         updatedPosition.longitude);
-    print("=== DISTACE === ${distance.toString()}");
     Map<String, dynamic> values = {
       "id": prefs.getString("id"),
       "position": updatedPosition.toJson()
@@ -100,11 +121,13 @@ class AppStateProvider with ChangeNotifier {
   }
 
   void sendRequest({String intendedLocation, LatLng coordinates}) async {
+    LatLng origin = LatLng(position.latitude, position.longitude);
+
     LatLng destination = coordinates;
     RouteModel route =
-        await _googleMapsServices.getRouteByCoordinates(_center, destination);
+        await _googleMapsServices.getRouteByCoordinates(origin, destination);
     routeModel = route;
-    _addLocationMarker(
+    addLocationMarker(
         destination, routeModel.endAddress, routeModel.distance.text);
     _center = destination;
     destinationController.text = routeModel.endAddress;
@@ -171,7 +194,7 @@ class AppStateProvider with ChangeNotifier {
   }
 
   // ANCHOR MARKERS
-  _addLocationMarker(LatLng position, String destination, String distance) {
+  addLocationMarker(LatLng position, String destination, String distance) {
     _markers = {};
     var uuid = new Uuid();
     String markerId = uuid.v1();
@@ -189,6 +212,11 @@ class AppStateProvider with ChangeNotifier {
     return byteData.buffer.asUint8List();
   }
 
+  clearMarkers() {
+    _markers.clear();
+    notifyListeners();
+  }
+
   _saveDeviceToken() async {
     prefs = await SharedPreferences.getInstance();
     if (prefs.getString('token') == null) {
@@ -199,26 +227,85 @@ class AppStateProvider with ChangeNotifier {
 
 // ANCHOR PUSH NOTIFICATION METHODS
   Future handleOnMessage(Map<String, dynamic> data) async {
-    print("=== data = ${data.toString()}");
-    hasNewRideRequest = true;
-    notifyListeners();
+    _handleNotificationData(data);
   }
 
   Future handleOnLaunch(Map<String, dynamic> data) async {
-    print("=== data = ${data.toString()}");
-    hasNewRideRequest = true;
-    notifyListeners();
+    _handleNotificationData(data);
   }
 
   Future handleOnResume(Map<String, dynamic> data) async {
-    print("=== data = ${data.toString()}");
+    _handleNotificationData(data);
+  }
+
+  _handleNotificationData(Map<String, dynamic> data) async {
     hasNewRideRequest = true;
+    rideRequestModel = RideRequestModel.fromMap(data['data']);
+    riderModel = await _riderServices.getRiderById(rideRequestModel.userId);
     notifyListeners();
   }
 
 // ANCHOR RIDE REQUEST METHODS
   changeRideRequestStatus() {
     hasNewRideRequest = false;
+    notifyListeners();
+  }
+
+  listenToRequest({String id, BuildContext context})async {
+//    requestModelFirebase = await _requestServices.getRequestById(id);
+    print("======= LISTENING =======");
+    requestStream = _requestServices.requestStream().listen((querySnapshot) {
+      querySnapshot.docChanges.forEach((doc) {
+        if (doc.doc.data()['id'] == id) {
+          requestModelFirebase = RequestModelFirebase.fromSnapshot(doc.doc);
+          notifyListeners();
+          switch (doc.doc.data()['status']) {
+            case CANCELLED:
+              print("====== CANCELELD");
+              break;
+            case ACCEPTED:
+              print("====== ACCEPTED");
+              break;
+            case EXPIRED:
+              print("====== EXPIRED");
+              break;
+            default:
+              print("==== PEDING");
+              break;
+          }
+        }
+      });
+    });
+  }
+
+  //  Timer counter for driver request
+  percentageCounter({String requestId, BuildContext context}) {
+    notifyListeners();
+    periodicTimer = Timer.periodic(Duration(seconds: 1), (time) {
+      timeCounter = timeCounter + 1;
+      percentage = timeCounter / 100;
+      print("====== GOOOO $timeCounter");
+      if (timeCounter == 100) {
+        timeCounter = 0;
+        percentage = 0;
+        time.cancel();
+        hasNewRideRequest = false;
+        requestStream.cancel();
+      }
+      notifyListeners();
+    });
+  }
+
+  acceptRequest({String requestId, String driverId}) {
+    hasNewRideRequest = false;
+    _requestServices.updateRequest(
+        {"id": requestId, "status": "accepted", "driverId": driverId});
+    notifyListeners();
+  }
+
+  cancelRequest({String requestId}) {
+    hasNewRideRequest = false;
+    _requestServices.updateRequest({"id": requestId, "status": "cancelled"});
     notifyListeners();
   }
 }

@@ -4,8 +4,8 @@ import 'package:cabdriver/helpers/style.dart';
 import 'package:cabdriver/providers/app_provider.dart';
 import 'package:cabdriver/providers/user.dart';
 import 'package:cabdriver/screens/login.dart';
+import 'package:cabdriver/screens/ride_request.dart';
 import 'package:cabdriver/screens/splash.dart';
-import 'package:cabdriver/widgets/custom_btn.dart';
 import 'package:cabdriver/widgets/custom_text.dart';
 import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
@@ -88,133 +88,7 @@ class _MyHomePageState extends State<MyHomePage> {
       case false:
         return home;
       case true:
-        return SafeArea(
-            child: Scaffold(
-          appBar: AppBar(
-            backgroundColor: white,
-            elevation: 0,
-            centerTitle: true,
-            title: CustomText(
-              text: "New Ride Request",
-              size: 19,
-              weight: FontWeight.bold,
-            ),
-            actions: [
-              IconButton(
-                  icon: Icon(
-                    Icons.close,
-                    color: black,
-                  ),
-                  onPressed: () {})
-            ],
-          ),
-          backgroundColor: white,
-          body: Container(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Container(
-                      decoration: BoxDecoration(
-                          color: Colors.deepOrange,
-                          borderRadius: BorderRadius.circular(40)),
-                      child: CircleAvatar(
-                        radius: 45,
-                        backgroundImage: AssetImage("images/rider.jpg"),
-                      ),
-                    ),
-                  ],
-                ),
-                SizedBox(height: 10),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    CustomText(text: "Santos Enoque"),
-                  ],
-                ),
-                SizedBox(height: 10),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(
-                      Icons.star,
-                      color: Colors.amber,
-                    ),
-                    Icon(
-                      Icons.star,
-                      color: Colors.amber,
-                    ),
-                    Icon(
-                      Icons.star,
-                      color: Colors.amber,
-                    ),
-                    Icon(
-                      Icons.star,
-                      color: Colors.grey.withOpacity(0.4),
-                    ),
-                    Icon(
-                      Icons.star,
-                      color: Colors.grey.withOpacity(0.4),
-                    )
-                  ],
-                ),
-                Divider(),
-                ListTile(
-                  title: Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      CustomText(
-                        text: "Destiation",
-                        color: grey,
-                      ),
-                    ],
-                  ),
-                  subtitle: FlatButton.icon(
-                      onPressed: () {},
-                      icon: Icon(Icons.location_on),
-                      label: Text("Laulane Secondary School")),
-                ),
-                Divider(),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                  children: [
-                    FlatButton.icon(
-                        onPressed: null,
-                        icon: Icon(Icons.flag),
-                        label: Text("User is 4.0km away")),
-                    FlatButton.icon(
-                        onPressed: null,
-                        icon: Icon(Icons.attach_money),
-                        label: Text("12.5")),
-                  ],
-                ),
-                Divider(),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                  children: [
-                    CustomBtn(
-                      text: "Accept",
-                      onTap: () {},
-                      bgColor: green,
-                      shadowColor: Colors.greenAccent,
-                    ),
-                    CustomBtn(
-                      text: "Reject",
-                      onTap: () {
-                        appState.changeRideRequestStatus();
-                        Navigator.pop(context);
-                      },
-                      bgColor: red,
-                      shadowColor: Colors.redAccent,
-                    )
-                  ],
-                ),
-              ],
-            ),
-          ),
-        ));
+        return RideRequestScreen();
       default:
         return home;
     }

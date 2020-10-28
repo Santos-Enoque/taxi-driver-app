@@ -23,6 +23,8 @@ class UserServices {
       "trips": trips,
       "rating": rating,
       "position": position,
+      "car": "Toyota Corolla",
+      "plate": "CBA 321 7",
       "token": token
     });
   }
