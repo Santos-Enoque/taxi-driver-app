@@ -42,6 +42,8 @@ dependencies:
   provider: null
   shared_preferences: ^0.5.12
   uuid: null
+  url_launcher: ^5.0.3
+  get_it: ^1.0.3+2
 
 dev_dependencies:
   flutter_test:

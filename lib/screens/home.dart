@@ -1,5 +1,6 @@
 import 'package:cabdriver/helpers/constants.dart';
 import 'package:cabdriver/helpers/screen_navigation.dart';
+import 'package:cabdriver/helpers/stars_method.dart';
 import 'package:cabdriver/helpers/style.dart';
 import 'package:cabdriver/providers/app_provider.dart';
 import 'package:cabdriver/providers/user.dart';
@@ -7,6 +8,8 @@ import 'package:cabdriver/screens/login.dart';
 import 'package:cabdriver/screens/ride_request.dart';
 import 'package:cabdriver/screens/splash.dart';
 import 'package:cabdriver/widgets/custom_text.dart';
+import 'package:cabdriver/widgets/loading.dart';
+import 'package:cabdriver/widgets/rider_draggable.dart';
 import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:provider/provider.dart';
@@ -81,7 +84,64 @@ class _MyHomePageState extends State<MyHomePage> {
               )
             ],
           )),
-          body: Map(scaffoldState)),
+          body: Stack(
+            children: [
+              MapScreen(scaffoldState),
+              Positioned(
+                  top: 60,
+                  left: MediaQuery.of(context).size.width / 6 ,
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 30),
+                    child: Container(
+                      decoration: BoxDecoration(
+                        color: white,
+                        borderRadius: BorderRadius.circular(30),
+                        boxShadow: [
+                          BoxShadow(
+                            color: grey,
+                            blurRadius: 17
+                          )
+                        ]
+                      ),
+                      child: Padding(
+                        padding: const EdgeInsets.all(8.0),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Container(
+                              child:userProvider.userModel?.phone  == null ? CircleAvatar(
+                                radius: 30,
+                                child: Icon(Icons.person_outline, size: 25,),
+                              ) : CircleAvatar(
+                                radius: 30,
+                                backgroundImage: NetworkImage(userProvider.userModel?.photo),
+                              ),
+                            ),
+                            SizedBox(width: 10,),
+                            Container(
+                              height: 60,
+                              child: Column(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  CustomText(text: userProvider.userModel.name, size: 18, weight: FontWeight.bold,),
+                                  stars(
+                                    rating: userProvider.userModel.rating,
+                                    votes: userProvider.userModel.votes
+                                  )
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  )),
+              //  ANCHOR Draggable DRIVER
+              Visibility(
+                  visible: appState.show == Show.RIDER,
+                  child: RiderWidget()),
+            ],
+          )),
     );
 
     switch (appState.hasNewRideRequest) {
@@ -95,16 +155,16 @@ class _MyHomePageState extends State<MyHomePage> {
   }
 }
 
-class Map extends StatefulWidget {
+class MapScreen extends StatefulWidget {
   final GlobalKey<ScaffoldState> scaffoldState;
 
-  Map(this.scaffoldState);
+  MapScreen(this.scaffoldState);
 
   @override
-  _MapState createState() => _MapState();
+  _MapScreenState createState() => _MapScreenState();
 }
 
-class _MapState extends State<Map> {
+class _MapScreenState extends State<MapScreen> {
   GoogleMapsPlaces googlePlaces;
   TextEditingController destinationController = TextEditingController();
   Color darkBlue = Colors.black;
@@ -122,12 +182,12 @@ class _MapState extends State<Map> {
   Widget build(BuildContext context) {
     AppStateProvider appState = Provider.of<AppStateProvider>(context);
     return appState.center == null
-        ? Splash()
+        ? Loading()
         : Stack(
             children: <Widget>[
               GoogleMap(
                 initialCameraPosition:
-                    CameraPosition(target: appState.center, zoom: 13),
+                    CameraPosition(target: appState.center, zoom: 15),
                 onMapCreated: appState.onCreate,
                 myLocationEnabled: true,
                 mapType: MapType.normal,

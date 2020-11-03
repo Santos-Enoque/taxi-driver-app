@@ -18,6 +18,8 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:uuid/uuid.dart';
 import 'dart:typed_data';
 
+enum Show { RIDER, TRIP }
+
 class AppStateProvider with ChangeNotifier {
   static const ACCEPTED = 'accepted';
   static const CANCELLED = 'cancelled';
@@ -58,6 +60,7 @@ class AppStateProvider with ChangeNotifier {
   double percentage = 0;
   Timer periodicTimer;
   RideRequestServices _requestServices = RideRequestServices();
+  Show show;
 
   AppStateProvider() {
 //    _subscribeUser();
@@ -85,6 +88,9 @@ class AppStateProvider with ChangeNotifier {
       "position": updatedPosition.toJson()
     };
     if (distance >= 50) {
+      if(show == Show.RIDER){
+        sendRequest(coordinates: requestModelFirebase.getCoordinates());
+      }
       _userServices.updateUserData(values);
       await prefs.setDouble('lat', updatedPosition.latitude);
       await prefs.setDouble('lng', updatedPosition.longitude);
@@ -142,7 +148,7 @@ class AppStateProvider with ChangeNotifier {
     String polyId = uuid.v1();
     poly.add(Polyline(
         polylineId: PolylineId(polyId),
-        width: 12,
+        width: 8,
         color: primary,
         onTap: () {},
         points: _convertToLatLong(_decodePoly(decodeRoute))));
@@ -251,7 +257,7 @@ class AppStateProvider with ChangeNotifier {
     notifyListeners();
   }
 
-  listenToRequest({String id, BuildContext context})async {
+  listenToRequest({String id, BuildContext context}) async {
 //    requestModelFirebase = await _requestServices.getRequestById(id);
     print("======= LISTENING =======");
     requestStream = _requestServices.requestStream().listen((querySnapshot) {
@@ -306,6 +312,12 @@ class AppStateProvider with ChangeNotifier {
   cancelRequest({String requestId}) {
     hasNewRideRequest = false;
     _requestServices.updateRequest({"id": requestId, "status": "cancelled"});
+    notifyListeners();
+  }
+
+  //  ANCHOR UI METHODS
+  changeWidgetShowed({Show showWidget}) {
+    show = showWidget;
     notifyListeners();
   }
 }

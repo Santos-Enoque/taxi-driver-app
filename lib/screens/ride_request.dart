@@ -1,3 +1,4 @@
+import 'package:cabdriver/helpers/stars_method.dart';
 import 'package:cabdriver/helpers/style.dart';
 import 'package:cabdriver/providers/app_provider.dart';
 import 'package:cabdriver/providers/user.dart';
@@ -83,7 +84,7 @@ class _RideRequestScreenState extends State<RideRequestScreen> {
               ],
             ),
             SizedBox(height: 10),
-            _stars(
+            stars(
                 rating: appState.riderModel.rating,
                 votes: appState.riderModel.votes),
             Divider(),
@@ -187,8 +188,8 @@ class _RideRequestScreenState extends State<RideRequestScreen> {
                       appState.acceptRequest(
                           requestId: appState.rideRequestModel.id,
                           driverId: userProvider.userModel.id);
-
-                      appState.sendRequest(coordinates: LatLng(appState.requestModelFirebase.position['latitude'], appState.requestModelFirebase.position['longitude']));
+                      appState.changeWidgetShowed(showWidget: Show.RIDER);
+                      appState.sendRequest(coordinates: appState.requestModelFirebase.getCoordinates());
 //                      showDialog(
 //                          context: context,
 //                          builder: (BuildContext context) {
@@ -278,16 +279,5 @@ class _RideRequestScreenState extends State<RideRequestScreen> {
     ));
   }
 
-  _stars({int votes, double rating}) {
-    if (votes == 0) {
-      return StarsWidget(
-        numberOfStars: 0,
-      );
-    } else {
-      double finalRate = rating / votes;
-      return StarsWidget(
-        numberOfStars: finalRate.floor(),
-      );
-    }
-  }
+
 }

@@ -4,11 +4,14 @@ import 'package:cabdriver/screens/login.dart';
 import 'package:cabdriver/screens/splash.dart';
 import 'package:flutter/material.dart';
 import 'helpers/constants.dart';
+import 'locators/service_locator.dart';
 import 'screens/home.dart';
 import 'package:provider/provider.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
+  setupLocator();
+
   return runApp(MultiProvider(
     providers: [
       ChangeNotifierProvider<AppStateProvider>.value(
